@@ -1,0 +1,10 @@
+[package]
+name = "rust-rpn-calc"
+version = "0.1.0"
+authors = ["milesrl <soccermiles1@gmail.com>"]
+
+[dependencies]
+
+[[bin]]
+name = "rust-rpn-calc"
+path = "main.rs"
