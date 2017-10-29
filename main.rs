@@ -94,7 +94,7 @@ impl Calculator {
         calc.ops.insert(String::from("log"),
             make_binop(String::from("Logarithm"),
             Box::new(|a, b| a.log(b)),
-            String::from("push(log_pop(pop)")));
+            String::from("push(log base pop of pop")));
         calc.ops.insert(String::from(">"),
             make_binop(String::from("Greater Than"),
             Box::new(|a, b| bool_to_f64(a > b)),
@@ -220,12 +220,11 @@ impl Calculator {
         calc
     }
 
-    pub fn exec(self, token: String) -> (Self, Vec<String>) {
+    pub fn exec(mut self, token: String) -> (Self, Vec<String>) {
         match f64::from_str(&(*token)) {
             Ok(num) => {
-                let mut new_stack = self.stack.clone();
-                new_stack.push_back(num);
-                (Calculator {stack: new_stack, ..self}, vec![])
+                self.stack.push_back(num);
+                (self, vec![])
             }
             Err(_) => {
                 let op = self.ops.get(&token).map(|x| x.clone());
