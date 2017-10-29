@@ -8,7 +8,7 @@ use std::rc::Rc;
 #[derive(Clone)]
 struct Calculator {
     stack: VecDeque<f64>,
-    ops: HashMap<String, Rc<Fn(&mut VecDeque<f64>) -> Vec<String>>>,
+    ops: HashMap<String, Rc<Fn(Calculator) -> (Calculator, Vec<String>)>>,
 }
 
 fn bool_to_f64(b: bool) -> f64 {
@@ -27,25 +27,25 @@ impl Calculator {
         };
 
         let make_binop = |name: String, binop: Box<Fn(f64, f64) -> f64>|
-            Rc::new(move |stack: &mut VecDeque<f64>| {
-                let len = stack.len();
+            Rc::new(move |mut calc: Calculator| {
+                let len = calc.stack.len();
                 if len < 2 {
-                    vec![format!("'{}' requires stack size >= 2, current = {}", name, len)]
+                    (calc, vec![format!("'{}' requires stack size >= 2, current = {}", name, len)])
                 } else {
-                    let a = stack.pop_back().unwrap();
-                    let b = stack.pop_back().unwrap();
-                    stack.push_back(binop(a, b));
-                    vec![]
+                    let a = calc.stack.pop_back().unwrap();
+                    let b = calc.stack.pop_back().unwrap();
+                    calc.stack.push_back(binop(a, b));
+                    (calc, vec![])
                 }
             });
 
         let make_unop = |name: String, unop: Box<Fn(f64) -> f64>|
-            Rc::new(move |stack: &mut VecDeque<f64>| {
-                match stack.pop_back() {
-                    None => vec![format!("'{}' requires a non-empty stack", name)],
+            Rc::new(move |mut calc: Calculator| {
+                match calc.stack.pop_back() {
+                    None => (calc, vec![format!("'{}' requires a non-empty stack", name)]),
                     Some(x) => {
-                        stack.push_back(unop(x));
-                        vec![]
+                        calc.stack.push_back(unop(x));
+                        (calc, vec![])
                     }
                 }
             });
@@ -114,29 +114,29 @@ impl Calculator {
 
         // stack manipulation and printing
         calc.ops.insert(String::from("print"),
-            Rc::new(|stack| match stack.pop_back() {
-                None => vec![String::from("The stack is empty")],
-                Some(n) => vec![format!("{}", n)],
+            Rc::new(|mut calc| match calc.stack.pop_back() {
+                None => (calc, vec![String::from("The stack is empty")]),
+                Some(n) => (calc, vec![format!("{}", n)]),
             }));
         calc.ops.insert(String::from("cp"),
-            Rc::new(|stack| match stack.back().map(|n| n.clone()) {
-                None => vec![String::from("'Copy' requires a non-empty stack")],
+            Rc::new(|mut calc| match calc.stack.back().map(|n| n.clone()) {
+                None => (calc, vec![String::from("'Copy' requires a non-empty stack")]),
                 Some(n) => {
-                    stack.push_back(n);
-                    vec![]
+                    calc.stack.push_back(n);
+                    (calc, vec![])
                 }
             }));
         calc.ops.insert(String::from("swap"),
-            Rc::new(|stack| {
-                let len = stack.len();
+            Rc::new(|mut calc| {
+                let len = calc.stack.len();
                 if len < 2 {
-                    vec![format!("'Swap' requires stack size >= 2, current = {}", len)]
+                    (calc, vec![format!("'Swap' requires stack size >= 2, current = {}", len)])
                 } else {
-                    let a = stack.pop_back().unwrap();
-                    let b = stack.pop_back().unwrap();
-                    stack.push_back(a);
-                    stack.push_back(b);
-                    vec![]
+                    let a = calc.stack.pop_back().unwrap();
+                    let b = calc.stack.pop_back().unwrap();
+                    calc.stack.push_back(a);
+                    calc.stack.push_back(b);
+                    (calc, vec![])
                 }
             }));
 
@@ -154,11 +154,7 @@ impl Calculator {
                 let op = self.ops.get(&token).map(|x| x.clone());
                 match op {
                     None => (self, vec![format!("Unknown command '{}'", &token)]),
-                    Some(func) => {
-                        let mut new_stack = self.stack.clone();
-                        let output = func(&mut new_stack);
-                        (Calculator {stack: new_stack, ..self}, output)
-                    }
+                    Some(func) => func(self)
                 }
             }
         }
