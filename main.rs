@@ -1,5 +1,5 @@
-use std::io;
-use std::io::{BufRead, Write};
+
+use std::io::{self, BufRead, Write};
 use std::iter::repeat;
 use std::collections::{VecDeque, HashMap};
 use std::str::FromStr;
