@@ -26,6 +26,7 @@ fn f64_to_bool(f: f64) -> bool {
 }
 
 impl Calculator {
+
     pub fn new() -> Self {
         let mut calc = Calculator {
             stack: VecDeque::new(),
@@ -135,6 +136,10 @@ impl Calculator {
             String::from("push(pop xor pop)")));
         
         // unary floating point operations
+        calc.ops.insert(String::from("neg"),
+            make_unop(String::from("Negate"),
+            Box::new(|x| -x),
+            String::from("push(whether pip is finite)")));
         calc.ops.insert(String::from("ln"),
             make_unop(String::from("Natural Logarithm"),
             Box::new(|x| x.ln()),
