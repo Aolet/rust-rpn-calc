@@ -5,28 +5,41 @@ use std::collections::{VecDeque, HashMap};
 use std::str::FromStr;
 use std::rc::Rc;
 
+/// The description of a calculator operation and how to execute it
 #[derive(Clone)]
 struct OpSpec {
+    /// A counted reference to the function itself
+    /// Takes a calculator's current state
+    /// Returns a list of messages to print, and the updated calculator state
     pub op: Rc<Fn(Calculator) -> (Calculator, Vec<String>)>,
+    /// A help string displayed for this operation when the user asks for help
     pub help: String
 }
 
+/// Stores the state of a calculator at any given time
 #[derive(Clone)]
 struct Calculator {
+    /// A stack to place values in
     stack: VecDeque<f64>,
+    /// The operations this calculator supports
+    /// The key in this map specifies a string the user writes to invoke the operation
+    /// An operation's key string should not have any spaces in it
     ops: HashMap<String, OpSpec>,
 }
 
+/// Used to encode a boolean as f64 (true -> 1.0, false -> 0.0)
 fn bool_to_f64(b: bool) -> f64 {
     if b {1.0} else {0.0}
 }
 
+/// Used to decode a boolean previously stored as f64 (0.0 -> false, != 0.0 -> true)
 fn f64_to_bool(f: f64) -> bool {
     f != 0.0
 }
 
 impl Calculator {
 
+    /// Constructs a new calculator with a basic set of operations available
     pub fn new() -> Self {
         let mut calc = Calculator {
             stack: VecDeque::new(),
@@ -225,6 +238,9 @@ impl Calculator {
         calc
     }
 
+    /// Executes a single token on the calculator, returning its new state and some messages
+    /// This implementation simply selects an operation based on the provided token
+    ///   and returns the result of executing that operation on the calculator's current state
     pub fn exec(mut self, token: String) -> (Self, Vec<String>) {
         match f64::from_str(&(*token)) {
             Ok(num) => {
