@@ -1,8 +1,7 @@
 # rust-rpn-calc
 A simple 64-bit Reverse Polish Notation (RPN) calculator
 
-Numbers
-----
+#### Numbers
 
 Entering a number places it on the stack...
 
@@ -15,8 +14,7 @@ pushes 1, 2 and then 3 onto the stack, so the stack is: [1, 2, 3].
 produces the stack [4, 2, 3].
 
 
-Commands
-----
+#### Commands
 
 Entering a command's name performs some operation on the stack values...
 
